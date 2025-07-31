@@ -1,30 +1,52 @@
 📊 Finance App
 
-A modular personal finance web application built with Flask, styled with TailwindCSS and DaisyUI, and containerized using Docker.
-This project focuses on applying clean architecture, good development practices, and exploring modern tools and interfaces.
-✨ Features:
+A modular personal finance web application built with Flask, styled using TailwindCSS and DaisyUI, and containerized with Docker.
 
-    Track transactions, budgets, cards, goals, and investments
+This project is a learning playground focused on applying clean architecture, improving backend practices, and experimenting with modern development tools and interfaces.
+✨ Features
 
-    Organized using Flask Blueprints and Jinja2 templates
+    📌 Track transactions, budgets, cards, goals, and investments
 
-    Responsive UI powered by TailwindCSS + DaisyUI
+    🧱 Modular structure using Flask Blueprints and Jinja2 templates
 
-    Data persistence via SQLite (can be adapted to others)
+    💡 Responsive UI with TailwindCSS and DaisyUI
 
-    Ready to run in a containerized environment (Docker)
+    💾 Data persistence via SQLite (easily adaptable to other databases)
 
-🚀 Goals:
+    🐳 Ready to run in a Docker containerized environment
 
-    Learn and apply best practices in backend development
+🚀 Goals
 
-    Experiment with modern UI components and frontend integration
+    Apply and reinforce backend best practices
 
-    Host on a self-managed home server in the near future
+    Explore and integrate modern frontend components
 
-    Collaborate and receive feedback from the dev community
+    Deploy the app on a self-hosted home server
 
-🤝 Contributions welcome!
+    Open the project for community feedback and collaboration
 
-Feel free to fork, open issues, or suggest improvements.
-This is a learning-focused project and I'm always open to ideas.
+🛠️ Tech Stack
+
+    Backend: Python, Flask
+
+    Frontend: HTML, Jinja2, TailwindCSS, DaisyUI
+
+    Database: SQLite
+
+    DevOps: Docker, Docker Compose
+
+🧠 Learning-Focused Project
+
+This is not a finished product, but a growing project aimed at continuous learning.
+Whether it's Flask blueprints, template inheritance, or Docker environments — every piece is meant to teach and improve.
+🤝 Contributing
+
+Contributions, suggestions and feedback are more than welcome!
+
+Feel free to:
+
+    Fork the repository
+
+    Open issues
+
+    Submit pull requests
