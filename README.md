@@ -39,9 +39,10 @@ This project is a learning playground focused on applying clean architecture, im
 
 This is not a finished product, but a growing project aimed at continuous learning.
 Whether it's Flask blueprints, template inheritance, or Docker environments — every piece is meant to teach and improve.
+
 🤝 Contributing
 
-Contributions, suggestions and feedback are more than welcome!
+dContributions, suggestions and feedback are more than welcome!
 
 Feel free to:
 
