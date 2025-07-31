@@ -1,0 +1,9 @@
+services:
+  finance-app:
+    build: .
+    container_name: finance-app
+    restart: unless-stopped
+    ports:
+      - "8090:5000"
+    volumes:
+      - ./data:/app/instance

@@ -1,0 +1,66 @@
+{# --- MODAIS PARA RENDA VARIÁVEL --- #}
+{% for asset in portfolio.variable_assets %}
+    <dialog id="buy_modal_{{ asset.id }}" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Comprar {{ asset.ticker }}</h3>
+            <form method="POST" action="{{ url_for('investments.transact_variable_asset', asset_id=asset.id) }}" class="space-y-4 pt-4">
+                <input type="hidden" name="transaction_type" value="buy">
+                <label class="form-control w-full"><div class="label"><span class="label-text">Quantidade</span></div><input type="number" step="any" name="quantity" placeholder="0.00" class="input input-bordered" required /></label>
+                <label class="form-control w-full"><div class="label"><span class="label-text">Preço por Unidade (R$)</span></div><input type="number" step="0.01" name="price" placeholder="0.00" class="input input-bordered" required /></label>
+                <div class="modal-action">
+                    {# CORREÇÃO APLICADA AQUI #}
+                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('buy_modal_{{ asset.id }}').close()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Registar Compra</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+
+    <dialog id="sell_modal_{{ asset.id }}" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Vender {{ asset.ticker }}</h3>
+            <form method="POST" action="{{ url_for('investments.transact_variable_asset', asset_id=asset.id) }}" class="space-y-4 pt-4">
+                <input type="hidden" name="transaction_type" value="sell">
+                <label class="form-control w-full"><div class="label"><span class="label-text">Quantidade</span></div><input type="number" step="any" name="quantity" placeholder="0.00" class="input input-bordered" max="{{ asset.quantity }}" required /></label>
+                <label class="form-control w-full"><div class="label"><span class="label-text">Preço por Unidade (R$)</span></div><input type="number" step="0.01" name="price" placeholder="0.00" class="input input-bordered" required /></label>
+                <div class="modal-action">
+                    {# CORREÇÃO APLICADA AQUI #}
+                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('sell_modal_{{ asset.id }}').close()">Cancelar</button>
+                    <button type="submit" class="btn btn-error">Registar Venda</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+{% endfor %}
+
+{# --- MODAIS PARA RENDA FIXA --- #}
+{% for asset in portfolio.fixed_income_assets %}
+    <dialog id="aporte_modal_{{ asset.id }}" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Aportar em {{ asset.name }}</h3>
+            <form method="POST" action="{{ url_for('investments.transact_fixed_income_asset', asset_id=asset.id) }}" class="space-y-4 pt-4">
+                <input type="hidden" name="transaction_type" value="aporte">
+                <label class="form-control w-full"><div class="label"><span class="label-text">Valor do Aporte (R$)</span></div><input type="number" step="0.01" name="amount" class="input input-bordered" required /></label>
+                <div class="modal-action">
+                    {# CORREÇÃO APLICADA AQUI #}
+                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('aporte_modal_{{ asset.id }}').close()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Registar Aporte</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+    <dialog id="resgate_modal_{{ asset.id }}" class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Resgatar de {{ asset.name }}</h3>
+            <form method="POST" action="{{ url_for('investments.transact_fixed_income_asset', asset_id=asset.id) }}" class="space-y-4 pt-4">
+                <input type="hidden" name="transaction_type" value="resgate">
+                <label class="form-control w-full"><div class="label"><span class="label-text">Valor do Resgate (R$)</span></div><input type="number" step="0.01" name="amount" class="input input-bordered" max="{{ asset.current_amount }}" required /></label>
+                <div class="modal-action">
+                    {# CORREÇÃO APLICADA AQUI #}
+                    <button type="button" class="btn btn-ghost" onclick="document.getElementById('resgate_modal_{{ asset.id }}').close()">Cancelar</button>
+                    <button type="submit" class="btn btn-error">Registar Resgate</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+{% endfor %}

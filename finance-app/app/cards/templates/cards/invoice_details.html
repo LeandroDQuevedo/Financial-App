@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros with context %}
+{% from "_macros.html" import render_month_navigator %}
+
+{% block title %}Fatura - {{ card.name }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h1 class="text-3xl font-bold">Fatura de {{ card.name }}</h1>
+    {{ render_month_navigator('cards.view_card_invoice', {'card_id': card.id}, prev_month, next_month, selected_year, selected_month, selected_month_name, year_options) }}
+    <a href="{{ url_for('transactions.index') }}" class="btn btn-secondary">Voltar ao Painel</a>
+</div>
+
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title text-2xl">Total: <span class="text-error">R$ {{ "%.2f"|format(total) }}</span></h2>
+        <div class="divider"></div>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead><tr><th>Data da Compra</th><th>Descrição</th><th>Categoria</th><th>Parcela</th><th class="text-right">Valor</th></tr></thead>
+                <tbody>
+                    {% for installment in installments %}
+                        <tr>
+                            <td>{{ installment.card_purchase.purchase_date.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ installment.card_purchase.description }}</td>
+                            <td><div class="badge badge-ghost">{{ installment.card_purchase.category.name }}</div></td>
+                            <td>{{ installment.installment_number }} de {{ installment.card_purchase.installments_count }}</td>
+                            <td class="text-right font-mono">R$ {{ "%.2f"|format(installment.amount) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="5" class="text-center py-4">Nenhuma parcela nesta fatura.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block form_content %}
+    {{ macros.render_form_content() }}
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros with context %}
+
+{% block title %}Minhas Carteiras de Investimento{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h1 class="text-3xl font-bold">Minhas Carteiras</h1>
+    <a href="{{ url_for('transactions.index') }}" class="btn btn-ghost">Voltar ao Painel</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {# Coluna para adicionar nova carteira #}
+    <div class="lg:col-span-1">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Criar Nova Carteira</h2>
+                <form action="{{ url_for('investments.portfolios') }}" method="POST" class="space-y-4">
+                    <label class="form-control w-full">
+                        <div class="label"><span class="label-text">Nome da Carteira</span></div>
+                        <input type="text" name="name" placeholder="Ex: Ações Longo Prazo" class="input input-bordered" required />
+                    </label>
+                    <div class="form-control mt-2">
+                        <button type="submit" class="btn btn-primary">Criar Carteira</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# Coluna para listar as carteiras existentes #}
+    <div class="lg:col-span-2 space-y-4">
+        {% for portfolio in portfolios %}
+            <div class="card bg-base-100 shadow-xl hover:bg-base-200 transition-all">
+                <div class="card-body">
+                    <h2 class="card-title">{{ portfolio.name }}</h2>
+                    <p class="text-sm text-base-content/70">
+                        {{ (portfolio.variable_assets|length) + (portfolio.fixed_income_assets|length) }} ativo(s) nesta carteira.
+                    </p>
+                    <div class="card-actions justify-end">
+                        {# Este link ainda não funciona, mas vamos criar a rota em breve #}
+                        <a href="{{ url_for('investments.portfolio_detail', portfolio_id=portfolio.id) }}" class="btn btn-outline btn-sm btn-primary">Ver Detalhes</a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body items-center text-center">
+                    <p class="text-base-content/70 py-8">Nenhuma carteira de investimentos criada.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block form_content %}
+    {# O formulário lateral de transações continua disponível aqui, se necessário #}
+    {{ macros.render_form_content() }}
+{% endblock %}

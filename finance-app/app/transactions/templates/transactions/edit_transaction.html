@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Transação{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Editar Transação</h1>
+    <a href="{{ url_for('transactions.dashboard', year=tx_date.year, month=tx_date.month) }}" class="btn btn-ghost">Cancelar</a>
+</div>
+<div class="card bg-base-100 shadow-xl max-w-2xl mx-auto">
+    <div class="card-body">
+        <form method="POST" class="space-y-4">
+            <label class="form-control w-full">
+                <div class="label"><span class="label-text">Descrição</span></div>
+                <input type="text" name="description" value="{{ transaction.description }}" class="input input-bordered w-full" required />
+            </label>
+            <label class="form-control w-full">
+                <div class="label"><span class="label-text">Valor (R$)</span></div>
+                <input type="text" name="amount" value="{{ transaction.total_amount if tx_type == 'card' else transaction.amount }}" class="input input-bordered w-full" required />
+            </label>
+            <label class="form-control w-full">
+                <div class="label"><span class="label-text">Categoria</span></div>
+                <select name="category_id" class="select select-bordered" required>
+                    {% for category in all_categories %}
+                        <option value="{{ category.id }}" {% if category.id == transaction.category_id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            {% if tx_type == 'card' %}
+            <div class="space-y-4">
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Cartão de Crédito</span></div>
+                    <select name="credit_card_id" class="select select-bordered" required>
+                        {% for card in all_cards %}
+                            <option value="{{ card.id }}" {% if card.id == transaction.credit_card_id %}selected{% endif %}>
+                                {{ card.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Número de Parcelas</span></div>
+                    <input type="number" name="installments" value="{{ transaction.installments_count }}" min="1" class="input input-bordered w-full">
+                </label>
+            </div>
+            {% endif %}
+            <div class="form-control mt-6">
+                <button type="submit" class="btn btn-primary w-full">Salvar Alterações</button>
+            </div>
+        </form>
+        <div class="divider">OU</div>
+        <form id="delete-form-{{ transaction.id }}" action="{{ url_for('transactions.delete_transaction', tx_id=transaction.id, tx_type=tx_type) }}" method="POST">
+            <button type="button" onclick="showConfirmationModal('delete-form-{{ transaction.id }}', 'Deseja realmente excluir esta transação?')" class="btn btn-error btn-outline w-full">
+                Excluir Transação
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block form_content %}
+    {# Este bloco não é utilizado nesta página específica #}
+{% endblock %}

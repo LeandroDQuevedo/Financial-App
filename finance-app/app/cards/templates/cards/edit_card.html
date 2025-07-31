@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros with context %}
+
+{% block title %}Editar Cartão de Crédito{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Editar Cartão: {{ card.name }}</h1>
+    <a href="{{ url_for('cards.manage_cards') }}" class="btn btn-ghost">Cancelar e Voltar</a>
+</div>
+
+<div class="card bg-base-100 shadow-xl max-w-2xl mx-auto">
+    <div class="card-body">
+        <form action="{{ url_for('cards.edit_card', card_id=card.id) }}" method="POST" class="space-y-4">
+            <label class="form-control w-full"><div class="label"><span class="label-text">Nome</span></div><input type="text" name="name" value="{{ card.name }}" class="input input-bordered" required></label>
+            <label class="form-control w-full"><div class="label"><span class="label-text">Limite (R$)</span></div><input type="number" step="0.01" name="limit" value="{{ card.limit }}" class="input input-bordered" required></label>
+            <label class="form-control w-full"><div class="label"><span class="label-text">Dia do Fechamento</span></div><input type="number" name="closing_day" value="{{ card.closing_day }}" class="input input-bordered" min="1" max="31" required></label>
+            <label class="form-control w-full"><div class="label"><span class="label-text">Dia do Vencimento</span></div><input type="number" name="due_day" value="{{ card.due_day }}" class="input input-bordered" min="1" max="31" required></label>
+            <div class="form-control mt-6"><button type="submit" class="btn btn-primary">Salvar Alterações</button></div>
+        </form>
+        <div class="divider">OU</div>
+        <form id="delete-form-{{ card.id }}" action="{{ url_for('cards.delete_card', card_id=card.id) }}" method="POST">
+            <button type="button" onclick="showConfirmationModal('delete-form-{{ card.id }}', 'Atenção: Todas as compras e parcelas associadas a este cartão também serão excluídas permanentemente. Tem certeza?')" class="btn btn-error btn-outline w-full">
+                Excluir Cartão
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block form_content %}
+    {{ macros.render_form_content() }}
+{% endblock %}

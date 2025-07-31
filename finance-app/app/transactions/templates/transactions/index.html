@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros with context %}
+{% from "_macros.html" import render_feed_item, render_month_navigator %}
+
+{% block title %}Painel - {{ selected_month_name }} de {{ selected_year }}{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="grid-header flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+        <div class="flex items-center gap-3">
+            <div class="flex-shrink-0"><img src="{{ url_for('static', filename='images/fehu.png') }}" alt="Logo" class="h-12 w-12"></div>
+            <div>
+                <h1 class="text-3xl font-bold">Painel</h1>
+                {# Este render_month_navigator agora usa 'transactions.dashboard' como endpoint #}
+                {{ render_month_navigator('transactions.dashboard', {}, prev_month, next_month, selected_year, selected_month, selected_month_name, year_options) }}
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {# ATENÇÃO: Estes links serão atualizados quando criarmos os outros módulos #}
+            <a href="{{ url_for('predictions.manage_monthly_predictions') }}" class="btn btn-neutral btn-sm">Previsões Mensais</a>
+            <a href="{{ url_for('goals.manage_goals') }}" class="btn btn-warning btn-sm">Metas</a>
+            <a href="{{ url_for('budgets.manage_budgets') }}" class="btn btn-accent btn-sm">Orçamentos</a>
+            <a href="{{ url_for('cards.manage_cards') }}" class="btn btn-secondary btn-sm">Cartões</a>
+            <a href="{{ url_for('investments.portfolios') }}" class="btn btn-info btn-sm">Investimentos</a>
+        </div>
+    </div>
+
+    <div class="grid-main space-y-6">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Resumo do Mês</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div><div class="text-sm font-semibold text-success">ENTRADAS</div><div class="text-2xl font-bold">R$ {{ "%.2f"|format(total_receita_mes) }}</div></div>
+                    <div><div class="text-sm font-semibold text-error">SAÍDAS</div><div class="text-2xl font-bold">R$ {{ "%.2f"|format(total_despesa_mes) }}</div></div>
+                    <div><div class="text-sm font-semibold text-info">BALANÇO DO MÊS</div><div class="text-2xl font-bold">R$ {{ "%.2f"|format(saldo_mes) }}</div></div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <h2 class="text-2xl font-bold mb-4">Atividades Recentes</h2>
+            <div class="space-y-2">
+                {% for item in feed %}{{ render_feed_item(item) }}{% else %}<div class="card bg-base-100 shadow"><div class="card-body items-center text-center"><p class="text-base-content/60 py-8">Nenhuma atividade registrada neste mês.</p></div></div>{% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-sidebar space-y-6">
+        <div class="card bg-base-100 shadow-xl"><div class="card-body"><h2 class="card-title">Distribuição de Despesas</h2><canvas id="expenseChart"></canvas></div></div>
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Orçamentos do Mês</h2>
+                <div class="space-y-4">
+                    {% for item in budget_data %}
+                        <div class="text-sm">
+                            <div class="flex justify-between font-bold">
+                                <span>{{ item.category_name }}</span>
+                                <span>R$ {{ "%.2f"|format(item.spent) }} / R$ {{ "%.2f"|format(item.budget) }}</span>
+                            </div>
+                            <progress class="progress {{ item.progress_class }} w-full" value="{{ item.percentage }}" max="100"></progress>
+                        </div>
+                    {% else %}
+                        <p class="text-base-content/70">Nenhum orçamento definido.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" class="toast toast-top toast-end z-50"></div>
+{% endblock %}
+
+{% block form_content %}
+    {{ macros.render_form_content() }}
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    function showGoalReminderToast(storageKey) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toastHTML = `
+            <div id="goal-toast" class="alert alert-info shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <h3 class="font-bold">Lembrete de Meta!</h3>
+                    <div class="text-xs">É um ótimo dia para poupar para seus objetivos.</div>
+                </div>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('goals.manage_goals') }}" class="btn btn-sm btn-primary">Ver Metas</a>
+                    <button id="dismiss-toast-btn" class="btn btn-sm btn-ghost">Fechar</button>
+                </div>
+            </div>
+        `;
+        container.innerHTML = toastHTML;
+
+        document.getElementById('dismiss-toast-btn').addEventListener('click', function() {
+            localStorage.setItem(storageKey, 'true');
+            const toastElement = document.getElementById('goal-toast');
+            if (toastElement) {
+                toastElement.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => { toastElement.remove(); }, 500);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const chartUrl = "{{ url_for('api.api_expense_by_category', year=selected_year, month=selected_month) }}";
+        fetch(chartUrl).then(response => response.json()).then(data => {
+            const ctx = document.getElementById('expenseChart'); if (!ctx) return; 
+            let existingChart = Chart.getChart(ctx); if (existingChart) { existingChart.destroy(); }
+            new Chart(ctx, { type: 'doughnut', data: { labels: data.labels, datasets: [{
+                label: 'Despesas', data: data.data,
+                backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#10b981','#14b8a6','#06b6d4','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a855f7','#d946ef','#ec4899'],
+                borderColor: 'hsl(var(--b1))', borderWidth: 2 }]
+            }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#d1d5db' : '#374151' } } } } });
+        });
+
+        fetch("{{ url_for('api.check_goal_reminder') }}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.show_reminder) {
+                    const storageKey = 'reminder_dismissed_' + data.current_month_year;
+                    if (!localStorage.getItem(storageKey)) {
+                        showGoalReminderToast(storageKey);
+                    }
+                }
+            });
+    });
+</script>
+{% endblock %}

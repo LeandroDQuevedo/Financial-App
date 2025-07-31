@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros with context %}
+{% set MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+
+{% block title %}Gerenciar Orçamentos{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h1 class="text-3xl font-bold">Orçamentos para {{ MONTH_NAMES[current_month-1] }} de {{ current_year }}</h1>
+    {# ATUALIZADO: Link para voltar ao painel de transações #}
+    <a href="{{ url_for('transactions.index') }}" class="btn btn-ghost">Voltar ao Painel</a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Definir ou Atualizar Orçamento</h2>
+            {# ATUALIZADO: Action do formulário agora usa 'budgets.manage_budgets' #}
+            <form action="{{ url_for('budgets.manage_budgets') }}" method="POST" class="space-y-4">
+                <input type="hidden" name="month" value="{{ current_month }}">
+                <input type="hidden" name="year" value="{{ current_year }}">
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Categoria</span></div>
+                    <select name="category" class="select select-bordered" required>
+                        {% for category in all_categories %}<option value="{{ category.id }}">{{ category.name }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label class="form-control w-full">
+                    <div class="label"><span class="label-text">Valor do Orçamento (R$)</span></div>
+                    <input type="number" step="0.01" name="amount" class="input input-bordered" required>
+                </label>
+                <div class="form-control mt-6">
+                <button type="submit" class="btn btn-primary">Salvar Orçamento</button>
+            </div>
+        </form>
+
+        <div class="divider">OU</div>
+
+        <h2 class="card-title mt-4">Adicionar Nova Categoria</h2>
+        {# ATUALIZADO: Action do formulário agora usa 'budgets.manage_categories' #}
+        <form action="{{ url_for('budgets.manage_categories') }}" method="POST" class="space-y-4">
+            <label class="form-control w-full">
+                <div class="label">
+                    <span class="label-text">Nome da Nova Categoria</span>
+                </div>
+                <input type="text" name="name" placeholder="Ex: Educação" class="input input-bordered" required />
+            </label>
+            <div class="form-control mt-2">
+                <button type="submit" class="btn btn-secondary btn-outline">Adicionar Categoria</button>
+            </div>
+        </form>
+    </div>
+</div>
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">Orçamentos Atuais</h2>
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead><tr><th>Categoria</th><th class="text-right">Valor Definido</th></tr></thead>
+                    <tbody>
+                        {% for category in all_categories %}
+                            {% set budget_amount = budgets.get(category.id, 0.0) %}
+                            <tr><td>{{ category.name }}</td><td class="text-right font-mono">R$ {{ "%.2f"|format(budget_amount) }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block form_content %}
+    {{ macros.render_form_content() }}
+{% endblock %}

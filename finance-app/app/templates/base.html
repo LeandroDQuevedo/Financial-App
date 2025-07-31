@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Controle de Finanças{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/fehu.png') }}">
+    
+    <link href="{{ url_for('static', filename='css/daisyui.min.css') }}" rel="stylesheet" type="text/css" />
+    <script src="{{ url_for('static', filename='js/tailwindcss.js') }}"></script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-base-200 min-h-screen">
+    <div class="drawer">
+        <input id="my-drawer" type="checkbox" class="drawer-toggle" />
+        <div class="drawer-content">
+            <div class="container mx-auto p-4 md:p-8">
+                {% block content %}{% endblock %}
+            </div>
+            <label for="my-drawer" class="btn btn-primary btn-circle fixed bottom-6 left-6 w-16 h-16 shadow-lg drawer-button z-40">
+                <svg xmlns="http://www.w.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            </label>
+        </div> 
+        <div class="drawer-side" style="z-index: 50;">
+            <label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+            <div class="p-4 w-80 md:w-96 min-h-full bg-base-100 text-base-content">
+                {% block form_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    
+    <dialog id="confirmation-modal" class="modal">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg text-warning">Confirmação Necessária</h3>
+        <p class="py-4" id="confirmation-modal-text">Você tem certeza que deseja realizar esta ação? Ela não poderá ser desfeita.</p>
+        <div class="modal-action">
+          <form method="dialog">
+            <button class="btn btn-ghost">Cancelar</button>
+          </form>
+          <button id="confirm-action-btn" class="btn btn-error">Confirmar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+        let formToSubmit = null;
+
+        function showConfirmationModal(formId, message) {
+            formToSubmit = document.getElementById(formId);
+            const modal = document.getElementById('confirmation-modal');
+            const modalText = document.getElementById('confirmation-modal-text');
+
+            if (modalText && message) {
+                modalText.innerText = message;
+            } else if (modalText) {
+                modalText.innerText = "Você tem certeza que deseja realizar esta ação? Ela não poderá ser desfeita.";
+            }
+
+            if (modal) {
+                modal.showModal();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- JAVASCRIPT CORRIGIDO E MAIS ROBUSTO ---
+            const tabs = document.querySelectorAll('#transaction-tabs a');
+            const creditFields = document.getElementById('credit-fields');
+            const hiddenPaymentMethod = document.getElementById('payment_method_hidden');
+            const creditCardSelector = document.getElementById('credit_card_selector');
+
+            // Verifica se os elementos essenciais do formulário de transação existem na página
+            if (tabs.length > 0 && creditFields && hiddenPaymentMethod && creditCardSelector) {
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        tabs.forEach(t => t.classList.remove('tab-active'));
+                        this.classList.add('tab-active');
+                        const tabType = this.getAttribute('data-tab');
+                        if (tabType === 'credit') {
+                            creditFields.classList.remove('hidden');
+                            if (creditCardSelector.value && !creditCardSelector.value.startsWith('Selecione')) {
+                                hiddenPaymentMethod.value = creditCardSelector.value;
+                            } else {
+                                hiddenPaymentMethod.value = "";
+                            }
+                            creditCardSelector.required = true;
+                        } else {
+                            creditFields.classList.add('hidden');
+                            hiddenPaymentMethod.value = 'cash_debit';
+                            creditCardSelector.required = false;
+                        }
+                    });
+                });
+
+                creditCardSelector.addEventListener('change', function() {
+                    if (document.querySelector('#transaction-tabs a[data-tab="credit"]').classList.contains('tab-active')) {
+                        hiddenPaymentMethod.value = this.value;
+                    }
+                });
+            }
+
+            // Lógica do modal de confirmação (sem alterações)
+            const confirmBtn = document.getElementById('confirm-action-btn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => {
+                    if (formToSubmit) {
+                        formToSubmit.submit();
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block page_scripts %}{% endblock %}
+</body>
+</html>

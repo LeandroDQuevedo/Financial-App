@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros with context %}
+
+{% block title %}Carteira: {{ portfolio.name }}{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <a href="{{ url_for('investments.portfolios') }}" class="text-sm link link-hover">‹ Voltar para todas as carteiras</a>
+        <h1 class="text-3xl font-bold">Carteira: {{ portfolio.name }}</h1>
+    </div>
+</div>
+
+<div class="card bg-base-100 shadow-xl mb-6">
+    <div class="card-body">
+        <h2 class="card-title mb-4">Resumo da Carteira</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">Valor Total Investido</div>
+                <div class="stat-value">R$ {{ "%.2f"|format(summary.total_invested) }}</div>
+                <div class="stat-desc">Custo de aquisição total</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">Valor de Mercado Atual</div>
+                <div class="stat-value text-secondary">R$ {{ "%.2f"|format(summary.total_market_value) }}</div>
+                <div class="stat-desc">Valor atual dos seus ativos</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+                <div class="stat-title">Lucro / Prejuízo</div>
+                <div class="stat-value {% if summary.total_pnl > 0 %}text-success{% elif summary.total_pnl < 0 %}text-error{% endif %}">
+                    R$ {{ "%.2f"|format(summary.total_pnl) }}
+                </div>
+                <div class="stat-desc">Rentabilidade da carteira</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="font-semibold text-center mb-2">Alocação por Ativo (Custo)</h3>
+                <canvas id="assetAllocationChart" 
+                        data-labels="{{ summary.asset_allocation.labels|tojson|safe }}"
+                        data-data="{{ summary.asset_allocation.data|tojson|safe }}"></canvas>
+            </div>
+            <div>
+                <h3 class="font-semibold text-center mb-2">Crescimento do Capital Investido</h3>
+                <canvas id="capitalGrowthChart"
+                        data-labels="{{ summary.capital_growth.labels|tojson|safe }}"
+                        data-data="{{ summary.capital_growth.data|tojson|safe }}"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card bg-base-100 shadow-xl mb-6">
+    <div class="card-body">
+        <h2 class="card-title">Renda Variável (Ações, FIIs, Cripto)</h2>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ativo</th>
+                        <th class="text-right">Preço Médio</th>
+                        <th class="text-right">Preço Atual</th>
+                        <th class="text-right">Quantidade</th>
+                        <th class="text-right">Valor de Mercado</th>
+                        <th class="text-right">Lucro/Prejuízo</th>
+                        <th class="text-center">Operações</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asset in portfolio.variable_assets %}
+                        {% set cost_basis = asset.quantity * asset.average_price %}
+                        {% set market_value = asset.quantity * (asset.current_price or 0) %}
+                        {% set pnl = market_value - cost_basis %}
+                        <tr>
+                            <td>
+                                <div class="font-bold">{{ asset.ticker }}</div>
+                                <div class="text-sm opacity-50">{{ asset.name }}</div>
+                            </td>
+                            <td class="text-right font-mono">R$ {{ "%.2f"|format(asset.average_price) }}</td>
+                            <td class="text-right font-mono text-secondary">R$ {{ "%.2f"|format(asset.current_price or 0) }}</td>
+                            <td class="text-right font-mono">{{ "%.4f"|format(asset.quantity) }}</td>
+                            <td class="text-right font-mono font-bold">R$ {{ "%.2f"|format(market_value) }}</td>
+                            <td class="text-right font-mono font-bold {% if pnl > 0 %}text-success{% elif pnl < 0 %}text-error{% endif %}">
+                                R$ {{ "%.2f"|format(pnl) }}
+                            </td>
+                            <td class="flex justify-center gap-2"><button class="btn btn-success btn-xs" onclick="document.getElementById('buy_modal_{{ asset.id }}').showModal()">Comprar</button><button class="btn btn-error btn-xs" onclick="document.getElementById('sell_modal_{{ asset.id }}').showModal()">Vender</button></td>
+                            <td><form id="delete_variable_asset_{{ asset.id }}" action="{{ url_for('investments.delete_variable_asset', asset_id=asset.id) }}" method="POST"><button type="button" onclick="showConfirmationModal('delete_variable_asset_{{ asset.id }}')" class="btn btn-ghost btn-xs"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></form></td>
+                        </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center py-4">Nenhum ativo de renda variável adicionado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="divider mt-4">Adicionar Novo Ativo Variável</div>
+        <form action="{{ url_for('investments.add_variable_asset', portfolio_id=portfolio.id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <label class="form-control"><div class="label"><span class="label-text">Ticker</span></div><input type="text" name="ticker" placeholder="Ex: PETR4" class="input input-bordered uppercase" required /></label>
+            <label class="form-control md:col-span-2"><div class="label"><span class="label-text">Nome</span></div><input type="text" name="name" placeholder="Ex: Petrobras PN" class="input input-bordered" /></label>
+            <label class="form-control"><div class="label"><span class="label-text">Tipo</span></div><select name="asset_type" class="select select-bordered" required><option value="Ação">Ação</option><option value="FII">FII</option><option value="Criptomoeda">Criptomoeda</option><option value="Outro">Outro</option></select></label>
+            <label class="form-control"><div class="label"><span class="label-text">Quantidade Inicial</span></div><input type="number" step="any" name="quantity" class="input input-bordered" required /></label>
+            <label class="form-control"><div class="label"><span class="label-text">Preço de Compra</span></div><input type="number" step="0.01" name="price" class="input input-bordered" required /></label>
+            <button type="submit" class="btn btn-primary md:col-start-5">Adicionar</button>
+        </form>
+    </div>
+</div>
+
+{# --- SECÇÃO DE RENDA FIXA --- #}
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title">Renda Fixa (CDBs, Tesouro Direto)</h2>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead><tr><th>Nome</th><th>Rendimento</th><th class="text-right">Valor Atual</th><th>Vencimento</th><th class="text-center">Operações</th><th></th></tr></thead>
+                <tbody>
+                    {% for asset in portfolio.fixed_income_assets %}
+                    <tr>
+                        <td class="font-bold">{{ asset.name }}</td>
+                        <td><div class="badge badge-ghost">{{ asset.yield_type }}</div> {{ asset.yield_rate }}%</td>
+                        <td class="text-right font-mono">R$ {{ "%.2f"|format(asset.current_amount) }}</td>
+                        <td>{{ asset.maturity_date.strftime('%d/%m/%Y') if asset.maturity_date else 'N/A' }}</td>
+                        <td class="flex justify-center gap-2"><button class="btn btn-success btn-xs" onclick="document.getElementById('aporte_modal_{{ asset.id }}').showModal()">Aportar</button><button class="btn btn-error btn-xs" onclick="document.getElementById('resgate_modal_{{ asset.id }}').showModal()">Resgatar</button></td>
+                        <td><form id="delete_fixed_income_asset_{{ asset.id }}" action="{{ url_for('investments.delete_fixed_income_asset', asset_id=asset.id) }}" method="POST"><button type="button" onclick="showConfirmationModal('delete_fixed_income_asset_{{ asset.id }}')" class="btn btn-ghost btn-xs"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></form></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center py-4">Nenhum ativo de renda fixa adicionado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="divider mt-4">Adicionar Ativo de Renda Fixa</div>
+        <form action="{{ url_for('investments.add_fixed_income_asset', portfolio_id=portfolio.id) }}" method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <label class="form-control md:col-span-2"><div class="label"><span class="label-text">Nome/Descrição</span></div><input type="text" name="name" placeholder="Ex: CDB Banco Master" class="input input-bordered" required /></label>
+            <label class="form-control"><div class="label"><span class="label-text">Valor Inicial</span></div><input type="number" step="0.01" name="current_amount" class="input input-bordered" required /></label>
+            {# Adicionado ID ao select para o JS #}
+            <label class="form-control"><div class="label"><span class="label-text">Tipo</span></div><select name="yield_type" id="yield_type_selector" class="select select-bordered" required><option value="CDI">CDI</option><option value="IPCA">IPCA+</option><option value="Prefixado">Prefixado</option></select></label>
+            {# Adicionado ID ao label da taxa para o JS #}
+            <label class="form-control"><div class="label"><span class="label-text" id="yield_rate_label">Taxa (% do CDI)</span></div><input type="number" step="0.01" name="yield_rate" class="input input-bordered" required /></label>
+            <label class="form-control"><div class="label"><span class="label-text">Vencimento</span></div><input type="date" name="maturity_date" class="input input-bordered" /></label>
+            <button type="submit" class="btn btn-primary md:col-start-5">Adicionar</button>
+        </form>
+    </div>
+</div>
+
+{% include 'investments/_modals.html' %}
+
+{% endblock %}
+
+{% block form_content %}
+    {{ macros.render_form_content() }}
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{{ url_for('static', filename='js/investment_charts.js') }}"></script>
+{% endblock %}

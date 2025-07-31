@@ -1,0 +1,31 @@
+/*
+ * Arquivo CSS personalizado.
+*/
+
+/* Classe utilitária para esconder a barra de rolagem mas manter a rolagem funcional */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Layout do Grid do Painel Principal (Dashboard) */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 2fr 1fr;
+        grid-template-areas:
+            "header header"
+            "main   sidebar";
+    }
+    .grid-header { grid-area: header; }
+    .grid-main   { grid-area: main; }
+    .grid-sidebar { grid-area: sidebar; }
+}
